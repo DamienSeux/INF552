@@ -5,8 +5,8 @@
 
 using namespace std;
 
-template <int n,typename k, typename F,int min>
-/* n is the number of component for the data, k their type (float of int), n the min number of point for the model
+template <int n,typename pt_type, typename F,int min>
+/* n is the number of component for the data, pt_type their type (float of int), n the min number of point for the model
  F is the class of the model
  F should have :
  - a min field : the minimum number of point to fit the model (static)
@@ -17,25 +17,31 @@ template <int n,typename k, typename F,int min>
  the least square fit is only applied to the best model and there is no minimum number
  of inliers.
 */
-class Ransac{
+class RANSAC{
 private:
     bool inliers[];
     F best; // the best model so far, or null if no model has been found
     int error; // score of the best model : the number of inliers
-    k thres; // thresold to decide who is an insider
+    pt_type thres; // thresold to decide who is an insider
     int nstep; // how many random sample we try
-    vector<vector<k>> data; // the data, is points of n components of type k.
+    vector<pair<vector<pt_type>,vector<pt_type> > > data; // the data, is points of n components of type pt_type.
 
 
 public :
-    Ransac(const vector<vector<k> >& data,k thres,int nstep):data(data),nstep(nstep),thres(thres){
+    RANSAC(const vector<pair<vector<pt_type>,vector<pt_type> > >& data,pt_type thres,int nstep):data(data),nstep(nstep),thres(thres){
         if(data.size()<min){
             throw invalid_argument("Pas assez de points");
         }
         inliers[data.size()];
     };
 
-    void randomize(vector<vector<k> >& t){
+    void copy(bool src[],bool dst[],int n){
+        for(int i=0;i<n;i++){
+            dst[i]=src[i];
+        }
+    }
+
+    void randomize(vector<pair<vector<pt_type>,vector<pt_type> > >& t){
         //sample min points at position 0..min-1 in t by swapping.
         srand((uint) time(NULL));
         if(min>t.size()){
@@ -44,7 +50,7 @@ public :
         int ind;
         for(int i=0;i<min;i++){
             ind=rand() % (t.size()-i)+i;
-            vector<k> temp=t[ind];
+            pair<vector<pt_type>,vector<pt_type> > temp=t[ind];
             t[ind]=t[i];
             t[i]=temp;
         }
@@ -55,14 +61,14 @@ public :
         error=NULL;
         for(int i=0;i<nstep;i++){
             randomize(data);
-
-
-
+            F model(data);
+            if(model.get_error()<error){
+                best=model;
+                error=model.get_error();
+                copy(model.inliers(),inliers,data.size());
+            }
+            delete model;
         }
-
-
-
-
 
 
     }
