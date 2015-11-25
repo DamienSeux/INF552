@@ -1,9 +1,7 @@
-
-
 #include <stdexcept>
-#include <vector>;
-#include <stdlib.h>;
-#include <time.h>;
+#include <vector>
+#include <stdlib.h>
+#include <time.h>
 
 using namespace std;
 
@@ -37,7 +35,7 @@ public :
         inliers[data.size()];
     };
 
-    void randomize(vector& t){
+    void randomize(vector<vector<k> >& t){
         //sample min points at position 0..min-1 in t by swapping.
         srand((uint) time(NULL));
         if(min>t.size()){
@@ -52,10 +50,12 @@ public :
         }
     }
 
-    void Ransac::compute(){
+    void compute(){
         best=NULL;
         error=NULL;
         for(int i=0;i<nstep;i++){
+            randomize(data);
+
 
 
         }
@@ -65,10 +65,15 @@ public :
 
 
 
-    };
+    }
 
-    inline F Ransac::get_best(){return best;}
-    inline int Ransac::get_error(){return error;}
-    inline bool* Ransac::get_inliers(){return inliers;}
+    inline F get_best(){return best;}
+    inline int get_error(){return error;}
+    inline bool* get_inliers(){return inliers;}
 
 };
+
+int main(int argc, char *argv[]){
+
+    return 0;
+}
