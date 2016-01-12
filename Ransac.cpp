@@ -2,6 +2,7 @@
 #include <vector>
 #include <iostream>
 #include "Droite.cpp"
+#include "Homographie.cpp"
 
 /* n is the number of component for the data, pt_type their type (float of int), n the min number of point for the model
  F is the class of the model, whose parameters are computed when constructor is called.
