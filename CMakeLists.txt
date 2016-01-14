@@ -8,8 +8,8 @@ FIND_PACKAGE(OpenCV REQUIRED)
 INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
 
 set(SOURCE_FILES
-        Ransac.cpp)
+        Ransac.cpp Panorama.cpp)
 
-add_executable(INF552 ${SOURCE_FILES})
+add_executable(INF552 ${SOURCE_FILES} Panorama.cpp)
 
 TARGET_LINK_LIBRARIES(INF552 ${OpenCV_LIBS} )

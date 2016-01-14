@@ -3,6 +3,9 @@
 #include <iostream>
 #include "Droite.cpp"
 #include "Homographie.cpp"
+#include <opencv2/features2d.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/opencv.hpp>
 
 /* n is the number of component for the data, pt_type their type (float of int), n the min number of point for the model
  F is the class of the model, whose parameters are computed when constructor is called.
@@ -12,7 +15,7 @@
  of inliers.
 */
 template <typename pt_type, typename dt_type, typename F,int min>
-class RANSAC{
+class Ransac{
 private:
     bool inliers[];
     F best; // the best model so far, or null if no model has been found
@@ -23,7 +26,7 @@ private:
     vector<int> ranks;
 
 public :
-    RANSAC(const vector<pair<dt_type,dt_type> >& data,float thres,int nstep):data(data),nstep(nstep),thres(thres){
+    Ransac(const vector<pair<dt_type,dt_type> >& data,float thres,int nstep):data(data),nstep(nstep),thres(thres){
         if(data.size()<min){
             throw invalid_argument("Pas assez de points");
         }
@@ -78,10 +81,10 @@ public :
 
 };
 
-
+/*
 int main(int argc, char *argv[]){
 
-    /*vector<pair<float,float> > data;
+    vector<pair<float,float> > data;
     srand((uint) time(NULL));
     for(int i=0;i<1000;i++){
         if(rand()%10!=0) {
@@ -97,9 +100,9 @@ int main(int argc, char *argv[]){
 
     float* param=test.get_best().param;
     cout<<param[0]<<","<<param[1]<<","<<param[2]<<endl;
-    cout<<test.get_best().get_error();*/
+    cout<<test.get_best().get_error();
 
-    vector<pair<pair<float, float>, pair<float, float>>> data;
+    vector<pair<Point2f, Point2f>> data;
     float thres = 0.2;
     for(int i = 0; i<100; i++){
         for(int j = 0; j<100; j++){
@@ -109,16 +112,36 @@ int main(int argc, char *argv[]){
         }
     }
 
-    RANSAC<float, pair<float, float>, Homographie,2> test=RANSAC<float, pair<float, float>, Homographie, 2>(data,thres,1000);
+    Point2f p1(0, 0);
+    Point2f p2(0.4, 0.4);
+    data.push_back(pair<Point2f, Point2f>(p1, p2));
+    Point2f p3(0, 1);
+    Point2f p4(5.0/9.0, 5.0/9.0);
+    data.push_back(pair<Point2f, Point2f>(p3, p4));
+    Point2f p5(1, 0);
+    Point2f p6(0.5, 0.6666);
+    data.push_back(pair<Point2f, Point2f>(p5, p6));
+    Point2f p7(1, 1);
+    Point2f p8(0.6, 0.7);
+    data.push_back(pair<Point2f, Point2f>(p7, p8));
+    vector<int> rank;
+    for(int i = 0; i<4; i++){
+        rank.push_back(i);
+    }
 
-    test.compute();
 
-    float* param=test.get_best().param;
+   // Ransac<float, Point2f, Homographie,4> test=Ransac<float, Point2f, Homographie, 4>(data,thres,1000);
+    Homographie H(data, rank, thres);
+
+    //test.compute();
+
+    float* param=H.param;
     cout<<param[0]<<"   "<<param[1]<<"   "<<param[2]<<endl;
     cout<<param[3]<<"   "<<param[4]<<"   "<<param[5]<<endl;
     cout<<param[6]<<"   "<<param[7]<<"   "<<param[8]<<endl;
-    cout<<"erreur :  "<< test.get_best().get_error();
+    cout<<"erreur :  "<< H.get_error();
 
 
     return 0;
 }
+*/
