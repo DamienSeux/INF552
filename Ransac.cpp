@@ -45,7 +45,7 @@ public :
 
     inline void randomize(vector<int>& t){
         //sample min points at position 0..min-1 in t by swapping.
-        srand((uint) time(NULL));
+
         if(min>t.size()){
             throw invalid_argument("Pas assez de points");
         }
@@ -64,8 +64,9 @@ public :
         for(int i=0;i<nstep;i++){
             randomize(ranks);
             F model(data,ranks,thres);
+            cout<<endl<<model.get_error()<<endl<<endl;
             if(model.get_error()<error){
-                best=model;
+                best=F(model);
                 error=model.get_error();
                 //copy(model.get_inliers(),inliers,data.size());
             }

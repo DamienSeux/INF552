@@ -40,10 +40,16 @@ public:
             A.at<float>(2 * i, 0) = -points[i].first.x;
             A.at<float>(2 * i, 1) = -points[i].first.y;
             A.at<float>(2 * i, 2) = -1.0;
+            A.at<float>(2 * i, 3) = 0.0;
+            A.at<float>(2 * i, 4) = 0.0;
+            A.at<float>(2 * i, 5) = 0.0;
             A.at<float>(2 * i, 6) = points[i].second.x * points[i].first.x;
             A.at<float>(2 * i, 7) = points[i].second.x * points[i].first.y;
             A.at<float>(2 * i, 8) = points[i].second.x;
 
+            A.at<float>(2 * i + 1, 0) = 0.0;
+            A.at<float>(2 * i + 1, 1) = 0.0;
+            A.at<float>(2 * i + 1, 2) = 0.0;
             A.at<float>(2 * i + 1, 3) = -points[i].first.x;
             A.at<float>(2 * i + 1, 4) = -points[i].first.y;
             A.at<float>(2 * i + 1, 5) = -1.0;
@@ -56,13 +62,12 @@ public:
         SVD::compute(A, S, U, V, SVD::FULL_UV);
 
         //on recupere la valeur singuliere minimale
-        int index = 0;
-        float min = S.at<float>(0, 0);
+        int index = 8;
+
         for (int i = 0; i < 9; i++)
-            if (min > S.at<float>(0, i)) {
-                min = S.at<float>(0, i);
-                index = i;
-            }
+            X.at<float>(0, i) = 0;
+
+        X.at<float>(0, index) = 1;
 
         for (int i = 0; i < 9; i++)
             X.at<float>(0, i) = 0;
@@ -71,9 +76,10 @@ public:
 
         HCol = V.t() * X;
 
+
         for (int i = 0; i < 3; i++){
             for (int j = 0; j < 3; j++) {
-                H.at<float>(i, j) = HCol.at<float>(0, 3 * i + j);
+                H.at<float>(i, j) = HCol.at<float>(0,i*3 + j);
             }
         }
 
@@ -107,11 +113,17 @@ public:
 
     Homographie(const Homographie &h, int n) {
         error = h.error;
-        float param[9];
+
         for(int i = 0; i<9; i++)
             param[i] = h.param[i];
         for(int i = 0; i < n; i++)
             inliers[i] = h.inliers[i];
+    }
+    Homographie(const Homographie &h) {
+        error = h.error;
+
+        for(int i = 0; i<9; i++)
+            param[i] = h.param[i];
     }
 
     Homographie() { };

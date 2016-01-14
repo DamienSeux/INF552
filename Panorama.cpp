@@ -14,20 +14,20 @@
 using namespace std;
 using namespace cv;
 
-const float thres = 2.5f; // Distance threshold to identify inliers
+const float thres = 1.5f; // Distance threshold to identify inliers
 const float nn_match_ratio = 0.6f;   // Nearest neighbor matching ratio
 
 int main(void)
 {
-    Mat I1 = imread("IMG_0026.JPG");
-    Mat img2;
-    for(int index = 27; index<61; index++) {
+    Mat I1 = imread("pano1/IMG_0027.JPG");
+    Mat img1;
+    for(int index = 28; index<29; index++) {
         std::stringstream sstm;
-        sstm << "IMG_00" << index << ".JPG";
+        sstm << "pano1/IMG_00" << index << ".JPG";
         string name = sstm.str();
         Mat I2 = imread(name);
-        Mat img1 = imread(name, IMREAD_GRAYSCALE);
-        cvtColor(I1,img2,CV_RGB2GRAY);
+        Mat img2 = imread(name, IMREAD_GRAYSCALE);
+        cvtColor(I1,img1,CV_RGB2GRAY);
         Mat img1_kp, img2_kp, img_corr, res_final;
         Mat homo(3, 3, DataType<float>::type);
 
@@ -67,7 +67,7 @@ int main(void)
 
         // Premier traitement
 
-        vector<KeyPoint> matched1, matched2, inliers1, inliers2;
+        vector<Point2f> matched1, matched2, inliers1, inliers2;
         vector<DMatch> good_matches, matches;
         for (size_t i = 0; i < nn_matches.size(); i++) {
             DMatch first = nn_matches[i][0];
@@ -75,33 +75,35 @@ int main(void)
             float dist2 = nn_matches[i][1].distance;
 
             if (dist1 < nn_match_ratio * dist2) {
-                matched1.push_back(kpts1[first.queryIdx]);
-                matched2.push_back(kpts2[first.trainIdx]);
+                matched1.push_back(kpts1[first.queryIdx].pt);
+                matched2.push_back(kpts2[first.trainIdx].pt);
                 matches.push_back(DMatch(matched1.size() - 1, matched2.size() - 1, 0));
             }
         }
 
         vector<pair<Point2f, Point2f>> data;
         for (int i = 0; i < matches.size(); i++) {
-            data.push_back(pair<Point2f, Point2f>(matched1[i].pt, matched2[i].pt));
+            data.push_back(pair<Point2f, Point2f>(matched1[i], matched2[i]));
         }
 
         Mat res;
-        drawMatches(img1, matched1, img2, matched2, matches, res);
-        imshow("Correspondance", res);
+       // drawMatches(img1, matched1, img2, matched2, matches, res);
+       // imshow("Correspondance", res);
         waitKey();
 
 
         // On trouve l'homographie
-        Ransac<float, Point2f, Homographie, 4> findHomo = Ransac<float, Point2f, Homographie, 4>(data, thres, 500);
-
+        Ransac<float, Point2f, Homographie, 4> findHomo = Ransac<float, Point2f, Homographie, 4>(data, thres, 100);
         findHomo.compute();
+        cout<<findHomo.get_error()<<endl;
+        cout<<data.size()<<endl;
 
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
                 homo.at<float>(i, j) = findHomo.get_best().param[3 * i + j];
 
-        cout << homo << endl;
+
+        cout << homo << endl<<endl;
         // L'inverse est utile pour l'affichage final
         Mat homo_inv = homo.inv();
 
@@ -109,13 +111,13 @@ int main(void)
 
         for (unsigned i = 0; i < matched1.size(); i++) {
             Mat col = Mat::ones(3, 1, CV_32F);
-            col.at<double>(0) = matched1[i].pt.x;
-            col.at<double>(1) = matched1[i].pt.y;
+            col.at<double>(0) = matched1[i].x;
+            col.at<double>(1) = matched1[i].y;
 
             col = homo * col;
             col /= col.at<double>(2);
-            double dist = sqrt(pow(col.at<double>(0) - matched2[i].pt.x, 2) +
-                               pow(col.at<double>(1) - matched2[i].pt.y, 2));
+            double dist = sqrt(pow(col.at<double>(0) - matched2[i].x, 2) +
+                               pow(col.at<double>(1) - matched2[i].y, 2));
 
             if (dist < thres) {
                 int new_i = static_cast<int>(inliers1.size());
@@ -126,8 +128,8 @@ int main(void)
         }
 
 
-        drawMatches(img1, inliers1, img2, inliers2, good_matches, res);
-        imshow("Correspondance", res);
+       // drawMatches(img1, inliers1, img2, inliers2, good_matches, res);
+       // imshow("Correspondance", res);
         waitKey();
 
         // Affichage recollé
