@@ -19,13 +19,15 @@ const float nn_match_ratio = 0.6f;   // Nearest neighbor matching ratio
 
 int main(void)
 {
-    Mat I1 = imread("pano1/IMG_0027.JPG");
+    Mat I1 = imread("pano1/IMG_0035.JPG");
     Mat img1;
-    for(int index = 28; index<29; index++) {
+    for(int index = 35; index<45; index++) {
         std::stringstream sstm;
         sstm << "pano1/IMG_00" << index << ".JPG";
         string name = sstm.str();
         Mat I2 = imread(name);
+        imshow("I2",I2);
+       // waitKey();
         Mat img2 = imread(name, IMREAD_GRAYSCALE);
         cvtColor(I1,img1,CV_RGB2GRAY);
         Mat img1_kp, img2_kp, img_corr, res_final;
@@ -49,9 +51,9 @@ int main(void)
         drawKeypoints(img1, kpts1, img1_kp);
         drawKeypoints(img2, kpts2, img2_kp);
         imshow("AKAZE points", img1_kp);
-        waitKey();
+        //waitKey();
         imshow("AKAZE points", img2_kp);
-        waitKey();
+        //waitKey();
 
         // KNN matching
 
@@ -63,7 +65,7 @@ int main(void)
         // On affiche le matching sans traitement
         drawMatches(img1, kpts1, img2, kpts2, nn_matches, img_corr);
         imshow("Correspondance", img_corr);
-        waitKey();
+       // waitKey();
 
         // Premier traitement
 
@@ -89,11 +91,11 @@ int main(void)
         Mat res;
        // drawMatches(img1, matched1, img2, matched2, matches, res);
        // imshow("Correspondance", res);
-        waitKey();
+       // waitKey();
 
 
         // On trouve l'homographie
-        Ransac<float, Point2f, Homographie, 4> findHomo = Ransac<float, Point2f, Homographie, 4>(data, thres, 100);
+        Ransac<float, Point2f, Homographie, 4> findHomo = Ransac<float, Point2f, Homographie, 4>(data, thres, 500);
         findHomo.compute();
         cout<<findHomo.get_error()<<endl;
         cout<<data.size()<<endl;
@@ -130,13 +132,23 @@ int main(void)
 
        // drawMatches(img1, inliers1, img2, inliers2, good_matches, res);
        // imshow("Correspondance", res);
-        waitKey();
+       // waitKey();
 
         // Affichage recollé
 
-        warpPerspective(I2, res_final, homo_inv, cv::Size(I1.cols * 2, I1.rows));
+
+        warpPerspective(I2, res_final, homo_inv, cv::Size(I1.cols +I2.cols, I1.rows));
         Mat half(res_final, Rect(0, 0, I1.cols, I1.rows));
-        I1.copyTo(half);
+
+        Mat mask;
+        cv::Scalar lowerb = cv::Scalar(0,0,0);
+        cv::Scalar upperb = cv::Scalar(0,0,0);
+
+        cv::inRange(I1, lowerb, upperb, mask);
+        Mat mask2(mask.rows,mask.cols,CV_8U,1);
+        mask2=mask2-mask;
+
+        I1.copyTo(half,mask2);
         imshow("Result", res_final);
         waitKey();
         I1 = res_final;

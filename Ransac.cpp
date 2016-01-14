@@ -64,7 +64,6 @@ public :
         for(int i=0;i<nstep;i++){
             randomize(ranks);
             F model(data,ranks,thres);
-            cout<<endl<<model.get_error()<<endl<<endl;
             if(model.get_error()<error){
                 best=F(model);
                 error=model.get_error();
