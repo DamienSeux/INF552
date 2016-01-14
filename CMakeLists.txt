@@ -11,3 +11,5 @@ set(SOURCE_FILES
         Ransac.cpp)
 
 add_executable(INF552 ${SOURCE_FILES})
+
+TARGET_LINK_LIBRARIES(INF552 ${OpenCV_LIBS} )

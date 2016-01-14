@@ -81,7 +81,7 @@ public :
 
 int main(int argc, char *argv[]){
 
-    vector<pair<float,float> > data;
+    /*vector<pair<float,float> > data;
     srand((uint) time(NULL));
     for(int i=0;i<1000;i++){
         if(rand()%10!=0) {
@@ -97,10 +97,27 @@ int main(int argc, char *argv[]){
 
     float* param=test.get_best().param;
     cout<<param[0]<<","<<param[1]<<","<<param[2]<<endl;
-    cout<<test.get_best().get_error();
+    cout<<test.get_best().get_error();*/
 
+    vector<pair<pair<float, float>, pair<float, float>>> data;
+    float thres = 0.2;
+    for(int i = 0; i<100; i++){
+        for(int j = 0; j<100; j++){
+            pair<float, float> p1(pow(1.1, i), pow(1.1, j));
+            pair<float, float> p2(pow(1.1, i), -pow(1.1, j));
+            data.push_back(pair<pair<float, float>, pair<float, float>>(p1, p2));
+        }
+    }
 
+    RANSAC<float, pair<float, float>, Homographie,2> test=RANSAC<float, pair<float, float>, Homographie, 2>(data,thres,1000);
 
+    test.compute();
+
+    float* param=test.get_best().param;
+    cout<<param[0]<<"   "<<param[1]<<"   "<<param[2]<<endl;
+    cout<<param[3]<<"   "<<param[4]<<"   "<<param[5]<<endl;
+    cout<<param[6]<<"   "<<param[7]<<"   "<<param[8]<<endl;
+    cout<<"erreur :  "<< test.get_best().get_error();
 
 
     return 0;
