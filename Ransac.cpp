@@ -17,7 +17,7 @@
 template <typename pt_type, typename dt_type, typename F,int min>
 class Ransac{
 private:
-    bool inliers[];
+    bool* inliers;
     F best; // the best model so far, or null if no model has been found
     int error; // score of the best model : the number of inliers
     float thres; // thresold to decide who is an insider
@@ -30,7 +30,7 @@ public :
         if(data.size()<min){
             throw invalid_argument("Pas assez de points");
         }
-        inliers[data.size()];
+        inliers = new bool[data.size()];
         ranks=vector<int>();
         for(int i=0;i<data.size();i++){
             ranks.push_back(i);
@@ -51,7 +51,7 @@ public :
         }
         int ind;
         for(int i=0;i<min;i++){
-            ind=rand() % (t.size()-i)+i;
+            ind=(int)rand() % (t.size()-i)+i;
             int temp=t[ind];
             t[ind]=t[i];
             t[i]=temp;
@@ -67,7 +67,7 @@ public :
             if(model.get_error()<error){
                 best=F(model);
                 error=model.get_error();
-                //copy(model.get_inliers(),inliers,data.size());
+                copy(model.get_inliers(),inliers,data.size());
             }
             //delete model;
         }
