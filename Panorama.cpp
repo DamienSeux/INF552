@@ -17,19 +17,15 @@ using namespace cv;
 const float thres = 1.5f; // Distance threshold to identify inliers
 const float nn_match_ratio = 0.6f;   // Nearest neighbor matching ratio
 
-int main(void)
-{
-    Mat I1 = imread("pano1/IMG_0035.JPG");
-    Mat img1;
-    for(int index = 35; index<45; index++) {
-        std::stringstream sstm;
-        sstm << "pano1/IMG_00" << index << ".JPG";
-        string name = sstm.str();
-        Mat I2 = imread(name);
-        imshow("I2",I2);
-       // waitKey();
-        Mat img2 = imread(name, IMREAD_GRAYSCALE);
-        cvtColor(I1,img1,CV_RGB2GRAY);
+
+
+
+int merge(Mat& I1,Mat& I2,Mat& output) {
+
+
+        Mat img1,img2;
+        cvtColor(I1,img1,CV_BGR2GRAY);
+        cvtColor(I2,img2,CV_RGB2GRAY);
         Mat img1_kp, img2_kp, img_corr, res_final;
         Mat homo(3, 3, DataType<float>::type);
 
@@ -48,12 +44,12 @@ int main(void)
         orb->detectAndCompute(img2, noArray(), kpts2, desc2);
 #endif
 
-        drawKeypoints(img1, kpts1, img1_kp);
+        /*drawKeypoints(img1, kpts1, img1_kp);
         drawKeypoints(img2, kpts2, img2_kp);
         imshow("AKAZE points", img1_kp);
-        //waitKey();
+        waitKey();
         imshow("AKAZE points", img2_kp);
-        //waitKey();
+        waitKey();*/
 
         // KNN matching
 
@@ -64,7 +60,7 @@ int main(void)
 
         // On affiche le matching sans traitement
         drawMatches(img1, kpts1, img2, kpts2, nn_matches, img_corr);
-        imshow("Correspondance", img_corr);
+       // imshow("Correspondance", img_corr);
        // waitKey();
 
         // Premier traitement
@@ -79,7 +75,7 @@ int main(void)
             if (dist1 < nn_match_ratio * dist2) {
                 matched1.push_back(kpts1[first.queryIdx].pt);
                 matched2.push_back(kpts2[first.trainIdx].pt);
-                matches.push_back(DMatch(matched1.size() - 1, matched2.size() - 1, 0));
+                matches.push_back(DMatch((int) matched1.size() - 1,(int) matched2.size() - 1, 0));
             }
         }
 
@@ -88,51 +84,29 @@ int main(void)
             data.push_back(pair<Point2f, Point2f>(matched1[i], matched2[i]));
         }
 
-        Mat res;
-       // drawMatches(img1, matched1, img2, matched2, matches, res);
-       // imshow("Correspondance", res);
-       // waitKey();
+        /*Mat res;
+        drawMatches(img1, matched1, img2, matched2, matches, res);
+        imshow("Correspondance", res);
+        waitKey();
+         */
 
 
         // On trouve l'homographie
         Ransac<float, Point2f, Homographie, 4> findHomo = Ransac<float, Point2f, Homographie, 4>(data, thres, 500);
         findHomo.compute();
-        cout<<findHomo.get_error()<<endl;
-        cout<<data.size()<<endl;
 
         for (int i = 0; i < 3; i++)
             for (int j = 0; j < 3; j++)
                 homo.at<float>(i, j) = findHomo.get_best().param[3 * i + j];
 
 
-        cout << homo << endl<<endl;
         // L'inverse est utile pour l'affichage final
         Mat homo_inv = homo.inv();
 
-        // On trouve les inliers
 
-        for (unsigned i = 0; i < matched1.size(); i++) {
-            Mat col = Mat::ones(3, 1, CV_32F);
-            col.at<double>(0) = matched1[i].x;
-            col.at<double>(1) = matched1[i].y;
-
-            col = homo * col;
-            col /= col.at<double>(2);
-            double dist = sqrt(pow(col.at<double>(0) - matched2[i].x, 2) +
-                               pow(col.at<double>(1) - matched2[i].y, 2));
-
-            if (dist < thres) {
-                int new_i = static_cast<int>(inliers1.size());
-                inliers1.push_back(matched1[i]);
-                inliers2.push_back(matched2[i]);
-                good_matches.push_back(DMatch(new_i, new_i, 0));
-            }
-        }
-
-
-       // drawMatches(img1, inliers1, img2, inliers2, good_matches, res);
-       // imshow("Correspondance", res);
-       // waitKey();
+       /*drawMatches(img1, inliers1, img2, inliers2, good_matches, res);
+       imshow("Correspondance", res);
+       waitKey();*/
 
         // Affichage recollé
 
@@ -149,11 +123,52 @@ int main(void)
         mask2=mask2-mask;
 
         I1.copyTo(half,mask2);
-        imshow("Result", res_final);
-        waitKey();
-        I1 = res_final;
-    }
+        output = res_final;
+    ~img1,img2,img1_kp,img2_kp;
+    ~mask,mask2;
 
     return 0;
-}
+    }
+
+    int main(void){
+    Mat output;
+    Mat I2 = imread("pano1/IMG_0045.JPG");
+
+       for(int index = 44; index>38; index--) {
+            cout<<index<<endl;
+            std::stringstream sstm;
+            sstm << "pano1/IMG_00" << index << ".JPG";
+            string name = sstm.str();
+            Mat I1 = imread(name);
+            merge(I1,I2,output);
+            I2=output;
+
+    }
+        Mat output2;
+        Mat I3 = imread("pano1/IMG_0030.JPG");
+        Mat dest1,dest2,dest3;
+        flip(I3,dest1,1);
+
+        for(int index = 31; index<39; index++) {
+            cout<<index<<endl;
+            std::stringstream sstm;
+            sstm << "pano1/IMG_00" << index << ".JPG";
+            string name = sstm.str();
+            Mat I4 = imread(name);
+            flip(I4,dest2,1);
+            merge(dest2,dest1,output2);
+            dest1=output2;
+
+        }
+        flip(output2,dest3,1);
+        Mat outputfinal;
+        merge(dest3,output,outputfinal);
+        imshow("Grand pano",outputfinal);
+        imwrite("Resultat.jpg",outputfinal);
+        imwrite("Resultatgauche.jpg",dest3);
+        imwrite("Resultatdroite.jpg",output);
+
+    return 0;
+    }
+
 
