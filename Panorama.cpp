@@ -6,10 +6,9 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/opencv.hpp>
 #include "Ransac.cpp"
+#include "Homographie.cpp"
 #include <sstream>
 
-// Enable ORB instead of AKAZE
-//#define ORB
 
 using namespace std;
 using namespace cv;
@@ -92,7 +91,7 @@ int merge(Mat& I1,Mat& I2,Mat& output) {
 
 
         // On trouve l'homographie
-        Ransac<float, Point2f, Homographie, 4> findHomo = Ransac<float, Point2f, Homographie, 4>(data, thres, 500);
+        Ransac< Point2f, Homographie, 4> findHomo = Ransac<Point2f, Homographie, 4>(data, thres, 500);
         findHomo.compute();
 
         for (int i = 0; i < 3; i++)
@@ -134,6 +133,7 @@ int merge(Mat& I1,Mat& I2,Mat& output) {
     Mat output;
     Mat I2 = imread("pano1/IMG_0045.JPG");
 
+        // On construit notre image en deux parties : d'abord de la droite au milieu
        for(int index = 44; index>38; index--) {
             cout<<index<<endl;
             std::stringstream sstm;
@@ -144,6 +144,7 @@ int merge(Mat& I1,Mat& I2,Mat& output) {
             I2=output;
 
     }
+        //Deuxième partie, de la gauche au milieu avec des matrices miroir
         Mat output2;
         Mat I3 = imread("pano1/IMG_0030.JPG");
         Mat dest1,dest2,dest3;

@@ -1,29 +1,23 @@
 #include <stdexcept>
 #include <vector>
-#include <iostream>
-#include "Droite.cpp"
-#include "Homographie.cpp"
-#include <opencv2/features2d.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/opencv.hpp>
-
-/* n is the number of component for the data, pt_type their type (float of int), n the min number of point for the model
+/* dt_type the type of points (Point2f e.g.),min is the minimum number of points for the model
  F is the class of the model, whose parameters are computed when constructor is called.
 
  This is the RANSAC explain in class and used in open CV and not the usual version :
- the least square fit is only applied to the best model and there is no minimum number
- of inliers.
+ the least square fit is not applied at each step
 */
-template <typename pt_type, typename dt_type, typename F,int min>
+using namespace std;
+
+template <typename dt_type, typename F,int min>
 class Ransac{
 private:
     bool* inliers;
     F best; // the best model so far, or null if no model has been found
     int error; // score of the best model : the number of inliers
-    float thres; // thresold to decide who is an insider
-    int nstep; // how many random sample we try
-    vector<pair<dt_type,dt_type > > data; // the data, is points of n components of type pt_type.
-    vector<int> ranks;
+    float thres; // thresold to decide who is an inlier
+    int nstep; // how many random sample are performed
+    vector<pair<dt_type,dt_type > > data; // the data
+    int* ranks; //to shuffle the data without touching data
 
 public :
     Ransac(const vector<pair<dt_type,dt_type> >& data,float thres,int nstep):data(data),nstep(nstep),thres(thres){
@@ -31,9 +25,9 @@ public :
             throw invalid_argument("Pas assez de points");
         }
         inliers = new bool[data.size()];
-        ranks=vector<int>();
+        ranks=new int[data.size()];
         for(int i=0;i<data.size();i++){
-            ranks.push_back(i);
+            ranks[i]=i;
         }
     };
 
@@ -43,15 +37,15 @@ public :
         }
     }
 
-    inline void randomize(vector<int>& t){
+    inline void randomize(int* t,int n){
         //sample min points at position 0..min-1 in t by swapping.
 
-        if(min>t.size()){
+        if(min>n){
             throw invalid_argument("Pas assez de points");
         }
         int ind;
         for(int i=0;i<min;i++){
-            ind=(int)rand() % (t.size()-i)+i;
+            ind=(int)rand() % (n-i)+i;
             int temp=t[ind];
             t[ind]=t[i];
             t[i]=temp;
@@ -62,14 +56,13 @@ public :
         best=F();
         error=data.size();
         for(int i=0;i<nstep;i++){
-            randomize(ranks);
+            randomize(ranks,data.size());
             F model(data,ranks,thres);
             if(model.get_error()<error){
                 best=F(model);
                 error=model.get_error();
                 copy(model.get_inliers(),inliers,data.size());
             }
-            //delete model;
         }
 
 

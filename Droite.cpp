@@ -3,6 +3,8 @@
 #include <cmath>
 #include <iostream>
 
+
+
 using namespace std;
 
 template <typename pt_type>
@@ -21,7 +23,7 @@ public:
         }
     }
 
-    Droite(const vector<pair<pt_type,pt_type> >& data,const vector<int>& ranks,float thres) {
+    Droite(const vector<pair<pt_type,pt_type> >& data,int* ranks,float thres) {
         pair<pt_type, pt_type> point1 = data[ranks[0]];
         pair<pt_type, pt_type> point2 = data[ranks[1]];
         bool inliers[data.size()];

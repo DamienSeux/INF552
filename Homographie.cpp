@@ -15,7 +15,7 @@ public:
     bool inliers[];
     int error;
 
-    Homographie(const vector<pair<Point2f, Point2f>> &data, const vector<int> &ranks, float thres) {
+    Homographie(const vector<pair<Point2f, Point2f>> &data,int* ranks, float thres) {
 
         vector<pair<Point2f, Point2f>> points;
         points.push_back(data[ranks[0]]);
@@ -35,7 +35,7 @@ public:
         Mat V(9, 9, CV_32F);
         Mat X(9, 1, CV_32F);
 
-        //on remplit les matrices
+        //Remplissage de la matrice du système linéaire dont A est solution.
         for (int i = 0; i < 4; i++) {
             A.at<float>(2 * i, 0) = -points[i].first.x;
             A.at<float>(2 * i, 1) = -points[i].first.y;
@@ -61,7 +61,7 @@ public:
         //calcul de la pseudo inverse
         SVD::compute(A, S, U, V, SVD::FULL_UV);
 
-        //on recupere la valeur singuliere minimale
+        //on recupere la valeur singuliere minimale, la dernière colonne de V.t()
         int index = 8;
 
         for (int i = 0; i < 9; i++)
@@ -69,10 +69,6 @@ public:
 
         X.at<float>(0, index) = 1;
 
-        for (int i = 0; i < 9; i++)
-            X.at<float>(0, i) = 0;
-
-        X.at<float>(0, index) = 1;
 
         HCol = V.t() * X;
 
@@ -82,11 +78,13 @@ public:
                 H.at<float>(i, j) = HCol.at<float>(0,i*3 + j);
             }
         }
-
+    // On sauvegarde les paramètres de H
         for(int i = 0; i<3; i++)
             for(int j = 0; j<3; j++)
                 param[3*i+j] = H.at<float>(i, j);
 
+
+        // On calcule l'erreur en cherchant les inliers
         bool flag;
         Mat p1(3, 1, DataType<float>::type);
         Mat p2(3, 1, DataType<float>::type);
@@ -98,7 +96,7 @@ public:
             p2.at<float>(0, 0) = data[i].second.x;
             p2.at<float>(1, 0) = data[i].second.y;
             p2.at<float>(2, 0) = 1;
-            p3= H*p1;
+            p3= H*p1; // image de p1 dans le plan projectif
             float alpha = p3.at<float>(2, 0);
             if(alpha!=0)
                 flag = (norm(H*p1*(1/alpha) - p2)<thres);
